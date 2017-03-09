@@ -89,18 +89,26 @@ void CRle::dump_processed2decoded(bool not_end)
         }
         int j = 0;
         int tmp_count = 0;
-        if (count < _processed[i].second)
+        if (_outfile != NULL)
         {
-            count = _processed[i].second;
-        }
-        for (j = 0; j < _processed[i].second; j ++)
-        {
-            _output[_outbuf_len ++ ] = _processed[i].first;
-            tmp_count ++;
-            if (_outbuf_len == sizeof(_output))
+            if (count < _processed[i].second)
             {
-                break;
+                count = _processed[i].second;
             }
+            for (j = 0; j < _processed[i].second; j ++)
+            {
+                _output[_outbuf_len ++ ] = _processed[i].first;
+                tmp_count ++;
+                if (_outbuf_len == sizeof(_output))
+                {
+                    break;
+                }
+            }
+        }
+        else
+        {
+            count  = _processed[i].second;
+            tmp_count = count;
         }
         assert(tmp_count <= _processed[i].second );
         _processed[i].second -= (tmp_count);
@@ -174,11 +182,13 @@ void CRle::decode(char * buf, int len)
     return;
 }
 
+static int total = 0;
 void CRle::run_encode()
 {
     while (1)
     {
         _inbuf_len = _infile->read_file(_inbuf, sizeof(_inbuf));
+        total += _inbuf_len;
 
         assert(_inbuf_len >= 0);
         encode(_inbuf, _inbuf_len);
@@ -242,11 +252,11 @@ void CRle::output_stdout(const std::pair<char, int>& item)
 void CRle::dump_processed2encoded(bool not_end)
 {
 
-    int processed_flag = 0;
+    int processed_flag = -1;
     int i = 0;
     for (i = 0; i < (int)_processed.size() - not_end; i ++)
     {
-        processed_flag = 1;
+        processed_flag  ++;
         assert(_processed[i].second > 0);
         if (_processed[i].second ==  1)
         {
@@ -274,7 +284,7 @@ void CRle::dump_processed2encoded(bool not_end)
     }
     std::vector<std::pair<char, int> > tmp = _processed;
     _processed.clear();
-    for (int j = processed_flag + i;j < (int)tmp.size();j ++)
+    for (int j = processed_flag + 1;j < (int)tmp.size();j ++)
     {
         _processed.push_back(tmp[j]);
     }
@@ -293,7 +303,7 @@ void CRle::encode(char* buf, int len)
         char_count = _processed[_processed.size() -1 ].second;
         flag = 1 ;
     }
-    for (int i = 0; i < _inbuf_len; i ++)
+    for (int i = 0; i < len; i ++)
     {
         if (buf[i] == prev_char)
         {
@@ -338,13 +348,18 @@ void CRle::encode_count(int count, char* buf, int & len)
         len ++;
         return;
     }
+    char tmp_buf[4];
     while (count > 0)
     {
         char tmp = count & 0x7f;
         tmp |= 0x80;
         count >>= 7;
-        memcpy(buf,  &tmp, 1);
+        memcpy(tmp_buf + len,  &tmp, 1);
         len ++;
+    }
+    for (int i = 0; i < len; i ++)
+    {
+        memcpy(buf + i , tmp_buf + len - i - 1, 1);
     }
     return;
 

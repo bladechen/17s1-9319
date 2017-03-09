@@ -35,13 +35,13 @@ class CRle
 
 
     private:
-        char _inbuf[5];
+        char _inbuf[4096 * 5];
         int _inbuf_len; // _inbuf_len of _inbuf is read in
 
 
         std::vector<std::pair<char, int> > _processed; // saved as char, count of char.
 
-        char _output[5];
+        char _output[4096 * 5];
         int _outbuf_len;
 
         COpFile* _infile;
