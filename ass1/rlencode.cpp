@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <rle.h>
+#include "rle.h"
 
 int main(int argc, char** argv)
 {

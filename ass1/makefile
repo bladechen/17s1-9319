@@ -1,4 +1,4 @@
-CFLAGS = -ggdb3 -Wall -O0
+CFLAGS = -ggdb3 -Wall -O3
 CC = g++
 SRC_FILE := $(wildcard *.cpp)
 OBJ_FILE := $(SRC_FILE:.cpp=.o)
