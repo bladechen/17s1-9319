@@ -216,8 +216,16 @@ void CRle::run_encode()
 
         assert(_inbuf_len >= 0);
         encode(_inbuf, _inbuf_len);
-        dump_processed2encoded(1);
-        dump2file();
+        while (1)
+        {
+
+            dump_processed2encoded(1);
+            dump2file();
+            if (_processed.size() <= 1)
+            {
+                break;
+            }
+        }
         if ((size_t)_inbuf_len < sizeof(_inbuf))
         {
             break;
