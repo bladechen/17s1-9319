@@ -126,20 +126,30 @@ void reverse_bysum()
 
 
 char ordered_chars[2000];
+int same_chars_count[2000] = {0};
 int char_cmp(const void* a, const  void *b)
 {
     return *(char*) a - *(char*)b;
 
 }
+
 void reverse_byrelation()
 {
     vector<int> prev_index[300];
+    int last_chars_count[300];
+
     memcpy(ordered_chars, last_chars, input_buflen + 1);
+    memset(last_chars_count, 0, sizeof(last_chars_count));
     qsort(ordered_chars, input_buflen, sizeof(char), char_cmp);
-    for (int i = 0; i < 300; i ++) prev_index[i].clear();
+    // for (int i = 0; i < 300; i ++) prev_index[i].clear();
     for (int i = 0; i < input_buflen;i ++)
     {
         prev_index[(unsigned char)ordered_chars[i]].push_back(i);
+    }
+    for (int i = 0; i < input_buflen; i++)
+    {
+        same_chars_count[i] = last_chars_count[last_chars[i]];
+        last_chars_count[last_chars[i]]  ++;
     }
     int position = 0;
     for (int i = 0; i < input_buflen; i ++)
@@ -157,10 +167,12 @@ void reverse_byrelation()
     while (len --)
     {
         decoded_buf[len] = cur_char;
-        cur_index = prev_index[cur_char].back();
-        prev_index[cur_char].pop_back();
-        printf ("%c %d\n", cur_char, cur_index);
+        cur_index = same_chars_count[position];
+        cur_index = prev_index[cur_char][cur_index];
+        // prev_index[cur_char].pop_back();
         cur_char = last_chars[cur_index];
+        position = cur_index;
+        printf ("%c %d\n", cur_char, cur_index);
     }
     return;
 }
