@@ -135,14 +135,14 @@ void CRle::dump_processed2decoded(bool not_end)
     }
     vector<std::pair<char, int> > tmp = _processed;
     _processed.clear();
-    for (size_t i = 0; i < tmp.size() - not_end; i ++)
+    for (int i = 0; i < (int)tmp.size() - not_end; i ++)
     {
         if (tmp[i].second != 0)
         {
             _processed.push_back(tmp[i]);
         }
     }
-    if (not_end == 1) _processed.push_back(tmp[tmp.size() -1]);
+    if (not_end == 1 && tmp.size() > 1) _processed.push_back(tmp[tmp.size() -1]);
     return;
 }
 

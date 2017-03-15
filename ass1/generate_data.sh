@@ -1,12 +1,12 @@
-TEST_CASE=20
+TEST_CASE=30
 
 TEST_DIR=./test
 mkdir -p $TEST_DIR
 
 random_str()
 {
-    # MATRIX="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz~!@#$%^&*()_+="
-    MATRIX="012"
+    MATRIX="01Avwxyz~!@#$%^&*()_+="
+    # MATRIX="012"
     LENGTH=$(($1  ))
     PASS=""
     while [ "${n:=1}" -le "$LENGTH" ]
@@ -17,7 +17,7 @@ random_str()
     echo $PASS
 }
 
-for ((i = 10;i < $TEST_CASE; i ++))
+for ((i = 20;i < $TEST_CASE; i ++))
 do
     echo `random_str $RANDOM` > $TEST_DIR/$i
     # ./rlencode ${TEST_DIR}/${i} ${TEST_DIR}/${i}.rle
