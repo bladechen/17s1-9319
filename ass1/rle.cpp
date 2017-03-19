@@ -44,11 +44,15 @@ CRle::~CRle()
  * 4. dump2file() write out _output to file.
  */
 
+// int count = 0;
+// int has_count = 0;
 void CRle::run_decode()
 {
+    // count = 0;
     while (1)
     {
         _inbuf_len = _infile->read_file(_inbuf, sizeof(_inbuf));
+        // count += _inbuf_len;
 
         assert(_inbuf_len >= 0);
         decode(_inbuf, _inbuf_len);
@@ -142,7 +146,7 @@ void CRle::dump_processed2decoded(bool not_end)
             _processed.push_back(tmp[i]);
         }
     }
-    if (not_end == 1 && tmp.size() > 1) _processed.push_back(tmp[tmp.size() -1]);
+    if (not_end == 1 && tmp.size() >= 1) _processed.push_back(tmp[tmp.size() -1]);
     return;
 }
 
@@ -250,6 +254,7 @@ void CRle::dump2file()
         _outbuf_len = 0;
         return;
     }
+    // has_count += _outbuf_len;
 
     int r =_outfile->write_file(_output, _outbuf_len);
     assert(r == _outbuf_len);
