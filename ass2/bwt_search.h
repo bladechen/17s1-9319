@@ -6,7 +6,8 @@
 #include "op_file.h"
 
 #define MAX_CHAR_COUNTS 128
-#define MAX_BLOCK_SIZE (4096 * 16)
+// #define MAX_BLOCK_SIZE (4096 * 16)
+#define MAX_BLOCK_SIZE (5)
 #define MAX_READ_BUFFER_SIZE (MAX_BLOCK_SIZE)
 class CBwtSearch
 {
@@ -29,9 +30,9 @@ public:
     };
 
     int init(const std::string& bwt, const std::string& index);
-    int build_index();
 
     void run(const std::vector<std::string>& query_strings);
+    int build_index();
 protected:
 
     int backward_search(const std::string& search_str, int& first, int& last);
@@ -41,9 +42,13 @@ protected:
     void read_index_file();
 
     int occ(char c, int pos_not_include_self);
+    int inverse_occ(char c, int l_pos) ;
 
     int read_block(int block_pos);
     int find_whole_string(const std::string& search_str, int first, int last);
+
+    void backward(int cur_pos, int& next_pos, char& c);
+    void forward(int cur_pos, int & next_pos, char& c);
 
 
 

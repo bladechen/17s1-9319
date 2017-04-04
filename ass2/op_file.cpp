@@ -1,7 +1,9 @@
-#include <op_file.h>
+#include "op_file.h"
+#include <unistd.h>
 #include <stdio.h>
 #include <sys/stat.h>// stat
 #include <stdio.h>   // FILE...
+#include <assert.h>
 using namespace std;
 
 COpFile::COpFile(const string& file_name, int open_flag)
@@ -62,4 +64,13 @@ int COpFile::has_content()
         return  -1;
     }
     return fileStat.st_size > 0 ? 1:0;
+}
+
+int COpFile::file_size()
+{
+    struct stat fileStat;
+    assert(0 == fstat(fd, &fileStat));
+    return fileStat.st_size ;
+
+
 }

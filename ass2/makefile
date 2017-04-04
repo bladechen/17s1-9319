@@ -1,5 +1,5 @@
 CFLAGS = -ggdb3 -Wall -O0
-CC = gcc
+CC = g++
 SRC_FILE := $(wildcard *.c)
 OBJ_FILE := $(SRC_FILE:.c=.o)
 INCLUDES = -I./
@@ -8,7 +8,7 @@ all: bwtsearch
 
 
 
-bwtsearch: main.o
+bwtsearch: main.o bwt_search.o op_file.o
 	$(CC) $^ -o $@  $(LIBS)
 
 %.d: %.c
