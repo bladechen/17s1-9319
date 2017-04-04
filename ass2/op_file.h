@@ -45,6 +45,7 @@ class COpFile
 
 
     int has_content();
+    int file_size();
     protected:
     int fd;
 

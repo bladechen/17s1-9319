@@ -1,14 +1,16 @@
 #ifndef _BWT_SEARCH_H_
 #define _BWT_SEARCH_H_
 #include <string>
+#include <map>
 #include <vector>
 #include "op_file.h"
 
+#define MAX_CHAR_COUNTS 128
 #define MAX_BLOCK_SIZE (4096 * 16)
 #define MAX_READ_BUFFER_SIZE (MAX_BLOCK_SIZE)
 class CBwtSearch
 {
-    public:
+public:
     CBwtSearch(){
         _bwt_file = NULL;
         _index_file = NULL;
@@ -26,14 +28,26 @@ class CBwtSearch
         }
     };
 
-    int CBwtSearch::init(const std::string& bwt, const std::string& index);
+    int init(const std::string& bwt, const std::string& index);
     int build_index();
-    private:
-    int bucket_sort();
-    void create_index_file();
 
+    void run(const std::vector<std::string>& query_strings);
+protected:
+
+    int backward_search(const std::string& search_str, int& first, int& last);
+    int find_whole_string(int first, int last);
+    void create_index_file();
     void write_index_file();
     void read_index_file();
+
+    int occ(char c, int pos_not_include_self);
+
+    int read_block(int block_pos);
+    int find_whole_string(const std::string& search_str, int first, int last);
+
+
+
+private:
     COpFile *_index_file;
     COpFile *_bwt_file;
 
@@ -43,6 +57,16 @@ class CBwtSearch
     int char_bucket[128];
     int block_index[170* 1024 * 1024/MAX_BLOCK_SIZE][128];
     int _block_num;
+
+    int _cur_block ; // refer to _read_buffer storing which blocks
+
+
+
+    int _bwt_file_size;
+
+    std::map<int, std::string> _result;
+
+    // int char_counts[128];
 };
 #endif
 
