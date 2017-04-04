@@ -44,6 +44,7 @@ class COpFile
     int write_file(char* output, int length);
 
 
+
     int has_content();
     int file_size();
     protected:

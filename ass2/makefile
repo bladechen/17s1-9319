@@ -1,24 +1,27 @@
-CFLAGS = -ggdb3 -Wall -O0
-CC = g++
-SRC_FILE := $(wildcard *.c)
-OBJ_FILE := $(SRC_FILE:.c=.o)
-INCLUDES = -I./
+CFLAGS := -ggdb3 -Wall -O0
+CC := g++
+SRC_FILE := $(wildcard *.cpp)
+OBJ_FILE := $(SRC_FILE:.cpp=.o)
+INCLUDES := -I./
 LIBS =
 all: bwtsearch
 
 
-
-bwtsearch: main.o bwt_search.o op_file.o
-	$(CC) $^ -o $@  $(LIBS)
-
-%.d: %.c
+%.o: %.cpp
+	$(CC)  $(CFLAGS) $(INCLUDES) -c $< -o $@
+-include $(SRC_FILE:.cpp=.d)
+%.d: %.cpp
 	@set -e; rm -f $@; \
-    $(CC) -M $(CFLAGS) $< > $@.$$$$; \
+    $(CC) -MM -ggdb3  $< > $@.$$$$; \
     sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
     rm -f $@.$$$$
 
 
+bwtsearch: $(OBJ_FILE)
+	$(CC) $^ -o $@  $(LIBS)
+
+
 .PHONY:clean
 clean:
-	-rm -f $(OBJ_FILE) bwtsearc *.dh
+	-rm -f $(OBJ_FILE) bwtsearch *.d *.o
 

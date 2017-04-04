@@ -9,6 +9,8 @@
 // #define MAX_BLOCK_SIZE (4096 * 16)
 #define MAX_BLOCK_SIZE (5)
 #define MAX_READ_BUFFER_SIZE (MAX_BLOCK_SIZE)
+
+#define MAX_FILE_SIZE (170)
 class CBwtSearch
 {
 public:
@@ -60,7 +62,7 @@ private:
     int _read_len ;
 
     int char_bucket[128];
-    int block_index[170* 1024 * 1024/MAX_BLOCK_SIZE][128];
+    int block_index[MAX_FILE_SIZE/MAX_BLOCK_SIZE][128];
     int _block_num;
 
     int _cur_block ; // refer to _read_buffer storing which blocks
