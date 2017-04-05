@@ -6,11 +6,13 @@
 #include "op_file.h"
 
 #define MAX_CHAR_COUNTS 128
-// #define MAX_BLOCK_SIZE (4096 * 16)
-#define MAX_BLOCK_SIZE (5)
+#define MAX_BLOCK_SIZE (4096 * 5)
+#define MAX_REPLICA_HASH_SIZE (200000)
+// #define MAX_BLOCK_SIZE (50)
 #define MAX_READ_BUFFER_SIZE (MAX_BLOCK_SIZE)
 
-#define MAX_FILE_SIZE (170)
+// #define MAX_FILE_SIZE (100000)
+#define MAX_FILE_SIZE (160*1024*1025)
 class CBwtSearch
 {
 public:

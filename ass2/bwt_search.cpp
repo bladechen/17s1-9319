@@ -3,12 +3,15 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <set>
 #include <stdio.h>
 #include "bwt_search.h"
 #include "assert.h"
 const char* MAGIC_STRING = "deadbeaf";
 // #define MAGIC_NUMBER 0xdeadbeef
 using namespace std;
+// #define DEBUG 1
+std::set<int> replica_hash;
 
 
 int CBwtSearch::init(const std::string& bwt, const std::string& index)
@@ -32,15 +35,16 @@ int CBwtSearch::build_index()
         assert(0);
     }
     //FIXME
-    // if (ret)
-    // {
-    //     read_index_file();
-    // }
-    // else
-    // {
+    if (ret)
+    {
+        read_index_file();
+    }
+    else
+    {
         create_index_file();
 
-    // }
+    }
+#ifdef DEBUG
     for (int i = 0; i < _block_num; i ++)
     {
         printf ("block %d\n", i);
@@ -61,6 +65,7 @@ int CBwtSearch::build_index()
             printf ("%c %d\n", i, char_bucket[i]);
         }
     }
+#endif
 
     return 0;
 }
@@ -104,6 +109,7 @@ void CBwtSearch::create_index_file()
             block_index[block][(int)_read_buffer[i]] ++;
         }
         block ++;
+        // printf ("block: %d\n", block);
 
         if (_read_len < (int)sizeof(_read_buffer))
         {
@@ -128,6 +134,7 @@ void CBwtSearch::create_index_file()
 
 void CBwtSearch::write_index_file()
 {
+    assert(_index_file->seek(0) >= 0);
     int ret = _index_file->write_file((char*)MAGIC_STRING, strlen(MAGIC_STRING));
     assert(ret > 0);
     ret = _index_file->write_file((char*)char_bucket, sizeof(char_bucket));
@@ -177,7 +184,9 @@ void CBwtSearch::run(const std::vector<std::string>& query_strings)
     {
         return;
     }
-    printf ("final f l: %d %d\n", first, last);
+#ifdef DEBUG
+     printf ("final f l: %d %d\n", first, last);
+#endif
     if (first > last)
     {
         return;
@@ -226,7 +235,7 @@ int CBwtSearch::backward_search(const std::string& search_str,int& first, int& l
     }
     while (cur_index -- && first <= last)
     {
-        printf ("first last %d %d\n", first, last);
+        // printf ("first last %d %d\n", first, last);
         cur_char = search_str[cur_index];
         int cur_char_count_first = occ(cur_char, first - 1);
         int cur_char_count_last = occ(cur_char, last );
@@ -235,7 +244,7 @@ int CBwtSearch::backward_search(const std::string& search_str,int& first, int& l
             // nothing find?
             return -1;
         }
-        printf ("occ %d %d\n", cur_char_count_first, cur_char_count_last);
+        // printf ("occ %d %d\n", cur_char_count_first, cur_char_count_last);
         first = cur_char_count_first + char_bucket[cur_char] ;
         last = cur_char_count_last + char_bucket[cur_char] - 1;
     }
@@ -249,11 +258,11 @@ int CBwtSearch::occ(char c, int pos_not_include_self)
     assert(prev_block <= _block_num - 2);
 
     int count = block_index[prev_block][(int)c];
-    if (_cur_block == -1 || _cur_block != prev_block)
-    {
+    // if (_cur_block == -1 || _cur_block != prev_block)
+    // {
         assert(read_block(prev_block) == 0);
-        _cur_block = prev_block;
-    }
+    //     _cur_block = prev_block;
+    // }
     // int end_pos = pos_not_include_self -
     for (int i = 0; i <= remain_chars;  ++i)
     {
@@ -267,6 +276,11 @@ int CBwtSearch::occ(char c, int pos_not_include_self)
 
 int CBwtSearch::read_block(int block_pos)
 {
+    if (block_pos == _cur_block && _cur_block != -1)
+    {
+        return 0;
+    }
+    _cur_block = block_pos;
     int offset = block_pos * MAX_BLOCK_SIZE ;
     int ret = _bwt_file->read_from_position(offset, _read_buffer, MAX_READ_BUFFER_SIZE);
     (void)ret;
@@ -282,12 +296,16 @@ int CBwtSearch::read_block(int block_pos)
 }
 int CBwtSearch::find_whole_string(const std::string& search_str, int first, int last)
 {
-    for (int i = first; i <= last; ++i)
+    // for (int i = first; i <= last; ++i)
+    for (int i = last ; i >= first; --i)
     {
         string result = "";
         int cur_pos = i;
         int next_pos = -1;
         char ch;
+
+        int flag = 0;
+        int point_counter = 0;
         while (1)
         {
             backward(cur_pos, next_pos, ch);
@@ -295,20 +313,34 @@ int CBwtSearch::find_whole_string(const std::string& search_str, int first, int 
             cur_pos = next_pos;
             if (ch == '[')
                 break;
-        }
-        result += search_str[0];
-        cur_pos = i;
-        while (1)
-        {
-            forward(cur_pos, next_pos, ch);
-            cur_pos = next_pos;
-            if (ch == '[') // FIXME,may when cur pos>=file size?
+            if (ch == ']')
+            {
+                flag = 1;
+            }
+            ++ point_counter ;
+            if (replica_hash.find(cur_pos) != replica_hash.end())
+            {
+                flag = 2; //has been record.
                 break;
-            result += ch;
+            }
+            if (replica_hash.size() < MAX_REPLICA_HASH_SIZE)
+            {
+                if (point_counter == 20)
+                {
+                    replica_hash.insert(cur_pos);
+                    point_counter = 0;
+                }
+            }
         }
+        if (flag == 0 || flag == 2)
+        {
+            continue;
+        }
+
+
         size_t  left = result.find ('[');
         size_t  right = result.find (']');
-        if (left != 1 || right == string::npos )
+        if (left != 0 || right == string::npos )
         {
             printf ("why %s\n", result.c_str());
             continue;
@@ -318,6 +350,34 @@ int CBwtSearch::find_whole_string(const std::string& search_str, int first, int 
         {
             id = id * 10 + result[j] - '0';
         }
+        if (_result.find(id) != _result.end())
+        {
+            continue;
+        }
+
+        result += search_str[0];
+        cur_pos = i;
+        ch = search_str[0];
+        while (1)
+        {
+            forward(cur_pos, next_pos, ch);
+            cur_pos = next_pos;
+            if (ch == '[')
+                break;
+            result += ch;
+        }
+        // left = result.find ('[');
+        // right = result.find (']');
+        // if (left != 0 || right == string::npos )
+        // {
+        //     printf ("why %s\n", result.c_str());
+        //     continue;
+        // }
+        // id = 0;
+        // for (int j = left + 1; j < (int)right; j ++)
+        // {
+        //     id = id * 10 + result[j] - '0';
+        // }
         _result[id] = result.substr(right + 1);
     }
     return 0;
@@ -336,6 +396,10 @@ void CBwtSearch::forward(int cur_pos, int& next_pos, char& c)
     next_pos = inverse_occ(c, cur_pos);
     for (int i = MAX_CHAR_COUNTS - 1; i >= 0; i--)
     {
+        if (char_bucket[i] ==  -1)
+        {
+            continue;
+        }
         if (char_bucket[i] <= next_pos)
         {
             c = i;
@@ -365,11 +429,17 @@ int CBwtSearch::inverse_occ(char c, int l_pos)
     }
     read_block(high);
     int pos = high * MAX_BLOCK_SIZE;
+    int remain_occ = occ_n - block_index[high][(int)c] + 1;
     for (int i = 0 ;i < MAX_BLOCK_SIZE; i ++)
     {
         if (_read_buffer[i] == c)
         {
-            pos += i;
+            remain_occ --;
+            if (remain_occ == 0)
+            {
+                pos += i;
+                break;
+            }
         }
 
     }

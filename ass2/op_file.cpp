@@ -41,6 +41,10 @@ int COpFile::write_file(char* output, int length)
     return r > 0 ? r: -errno;
 
 }
+int COpFile::seek(size_t off)
+{
+    return lseek(fd, off, SEEK_SET);
+}
 
 int COpFile::read_from_position(size_t off, char* buf, int max_length)
 {

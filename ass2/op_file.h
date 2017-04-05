@@ -19,7 +19,7 @@ class COpFile
 
     int read_from_position(size_t off, char* buf, int max_length);
 
-    // int seek(size_t off);
+    int seek(size_t off);
 
 
     // int write_to_posi
