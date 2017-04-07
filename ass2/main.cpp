@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include "fuck.h"
 #include "bwt_search.h"
 #include <vector>
 using namespace std;

@@ -6,13 +6,13 @@
 #include "op_file.h"
 
 #define MAX_CHAR_COUNTS 128
-#define MAX_BLOCK_SIZE (4096 * 5)
-#define MAX_REPLICA_HASH_SIZE (200000)
+#define MAX_BLOCK_SIZE (4096 * 4)
+#define MAX_REPLICA_HASH_SIZE (100000)
 // #define MAX_BLOCK_SIZE (50)
 #define MAX_READ_BUFFER_SIZE (MAX_BLOCK_SIZE)
 
 // #define MAX_FILE_SIZE (100000)
-#define MAX_FILE_SIZE (160*1024*1025)
+#define MAX_FILE_SIZE (160*1024*1024+1000)
 class CBwtSearch
 {
 public:
@@ -73,7 +73,9 @@ private:
 
     int _bwt_file_size;
 
-    std::map<int, std::string> _result;
+    std::map<int, bool> _result;
+    std::vector<std::string> _qstr;
+
 
     // int char_counts[128];
 };

@@ -177,6 +177,12 @@ void CBwtSearch::run(const std::vector<std::string>& query_strings)
     {
         return;
     }
+    for (int i = 0; i < (int)query_strings.size(); i++)
+    {
+        if (i == search_index) continue;
+        _qstr.push_back(query_strings[i]);
+    }
+    write (2, search_str.c_str(), search_str.length());
     assert(search_str != "");
     int last = 0;
     int first = 0;
@@ -196,29 +202,29 @@ void CBwtSearch::run(const std::vector<std::string>& query_strings)
     {
         return;
     }
-    for (std::map<int, std::string>::iterator it = _result.begin();
-         it != _result.end() ;
-         it ++)
-    {
-        bool all_match = 1;
-        for (int i = 0; i < (int)query_strings.size(); ++ i)
-        {
-            if (search_index  == i)
-            {
-                continue;
-            }
-            if (strstr(it->second.c_str(), query_strings[i].c_str()) == NULL) // this one is boyer more?
-            {
-                all_match = 0;
-                break;
-            }
-        }
-        if (all_match  == 1)
-        {
-            printf ("[%d]%s\n",it->first, it->second.c_str() );
-        }
+    // for (std::map<int, std::string>::iterator it = _result.begin();
+    //      it != _result.end() ;
+    //      it ++)
+    // {
+    //     bool all_match = 1;
+    //     for (int i = 0; i < (int)query_strings.size(); ++ i)
+    //     {
+    //         if (search_index  == i)
+    //         {
+    //             continue;
+    //         }
+    //         if (strstr(it->second.c_str(), query_strings[i].c_str()) == NULL) // this one is boyer more?
+    //         {
+    //             all_match = 0;
+    //             break;
+    //         }
+    //     }
+    //     if (all_match  == 1)
+    //     {
+    //         printf ("[%d]%s\n",it->first, it->second.c_str() );
+    //     }
 
-    }
+    // }
     return;
 }
 int CBwtSearch::backward_search(const std::string& search_str,int& first, int& last)
@@ -331,6 +337,10 @@ int CBwtSearch::find_whole_string(const std::string& search_str, int first, int 
                     point_counter = 0;
                 }
             }
+            // else
+            // {
+            //     write(2, "full set!\n", 9);
+            // }
         }
         if (flag == 0 || flag == 2)
         {
@@ -342,7 +352,7 @@ int CBwtSearch::find_whole_string(const std::string& search_str, int first, int 
         size_t  right = result.find (']');
         if (left != 0 || right == string::npos )
         {
-            printf ("why %s\n", result.c_str());
+            // printf ("why %s\n", result.c_str());
             continue;
         }
         int id = 0;
@@ -378,8 +388,25 @@ int CBwtSearch::find_whole_string(const std::string& search_str, int first, int 
         // {
         //     id = id * 10 + result[j] - '0';
         // }
-        _result[id] = result.substr(right + 1);
+        // may eat all 50M if there are 5000 records with 10000chars each, so output immediately.
+        _result[id] = 1;
+        string tmp_str = result.substr(right + 1);
+        bool all_match = 1;
+        for (int i = 0; i < (int)_qstr.size(); ++ i)
+        {
+            if (strstr(tmp_str.c_str(), _qstr[i].c_str()) == NULL) // this one is boyer more?
+            {
+                all_match = 0;
+                break;
+            }
+        }
+        if (all_match  == 1)
+        {
+            printf ("[%d]%s\n",id, tmp_str.c_str());
+        }
+
     }
+
     return 0;
 }
 
