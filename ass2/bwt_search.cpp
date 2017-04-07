@@ -11,7 +11,7 @@ const char* MAGIC_STRING = "deadbeaf";
 // #define MAGIC_NUMBER 0xdeadbeef
 using namespace std;
 // #define DEBUG 1
-std::set<int> replica_hash;
+std::set<int> replica_hash; // this is tricky, if position in bwt has already scaned, no need to scan again. because they are in the same record.
 
 
 int CBwtSearch::init(const std::string& bwt, const std::string& index)
@@ -34,7 +34,6 @@ int CBwtSearch::build_index()
     {
         assert(0);
     }
-    //FIXME
     if (ret)
     {
         read_index_file();
@@ -69,7 +68,11 @@ int CBwtSearch::build_index()
 
     return 0;
 }
-
+// index file format
+// deadbeaf(8bytes)
+// 128 * 4 bytes for c array
+// 4 bytes block count
+// [block count] * 128 * 4 bytes for occ array
 void CBwtSearch::read_index_file()
 {
     int ret = _index_file->read_file(_read_buffer, strlen(MAGIC_STRING));
@@ -182,7 +185,6 @@ void CBwtSearch::run(const std::vector<std::string>& query_strings)
         if (i == search_index) continue;
         _qstr.push_back(query_strings[i]);
     }
-    write (2, search_str.c_str(), search_str.length());
     assert(search_str != "");
     int last = 0;
     int first = 0;
@@ -310,7 +312,7 @@ int CBwtSearch::find_whole_string(const std::string& search_str, int first, int 
         int next_pos = -1;
         char ch;
 
-        int flag = 0;
+        int flag = 0; // 0 stands for the search term is in [], 1 for ok,  2 is meeting the pos searched before.
         int point_counter = 0;
         while (1)
         {
@@ -329,7 +331,7 @@ int CBwtSearch::find_whole_string(const std::string& search_str, int first, int 
                 flag = 2; //has been record.
                 break;
             }
-            if (replica_hash.size() < MAX_REPLICA_HASH_SIZE)
+            if (replica_hash.size() < MAX_REPLICA_HASH_SIZE) //only to limit the mem use...
             {
                 if (point_counter == 20)
                 {
@@ -376,18 +378,6 @@ int CBwtSearch::find_whole_string(const std::string& search_str, int first, int 
                 break;
             result += ch;
         }
-        // left = result.find ('[');
-        // right = result.find (']');
-        // if (left != 0 || right == string::npos )
-        // {
-        //     printf ("why %s\n", result.c_str());
-        //     continue;
-        // }
-        // id = 0;
-        // for (int j = left + 1; j < (int)right; j ++)
-        // {
-        //     id = id * 10 + result[j] - '0';
-        // }
         // may eat all 50M if there are 5000 records with 10000chars each, so output immediately.
         _result[id] = 1;
         string tmp_str = result.substr(right + 1);
@@ -454,6 +444,7 @@ int CBwtSearch::inverse_occ(char c, int l_pos)
             high = mid - 1;
         }
     }
+    // index high is last one smaller than occ_n
     read_block(high);
     int pos = high * MAX_BLOCK_SIZE;
     int remain_occ = occ_n - block_index[high][(int)c] + 1;

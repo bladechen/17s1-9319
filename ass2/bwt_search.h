@@ -63,18 +63,18 @@ private:
     char _read_buffer[MAX_READ_BUFFER_SIZE];
     int _read_len ;
 
-    int char_bucket[128];
-    int block_index[MAX_FILE_SIZE/MAX_BLOCK_SIZE][128];
-    int _block_num;
+    int char_bucket[128]; // c array
+    int block_index[MAX_FILE_SIZE/MAX_BLOCK_SIZE][128]; // occ array
+    int _block_num; //how many block used in block_index
 
-    int _cur_block ; // refer to _read_buffer storing which blocks
+    int _cur_block ; // refer to _read_buffer storing which block to reduce reading from file
 
 
 
     int _bwt_file_size;
 
-    std::map<int, bool> _result;
-    std::vector<std::string> _qstr;
+    std::map<int, bool> _result; // the record id
+    std::vector<std::string> _qstr; //querysting
 
 
     // int char_counts[128];
