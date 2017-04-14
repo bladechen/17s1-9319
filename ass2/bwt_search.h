@@ -65,7 +65,7 @@ private:
 
     int char_bucket[128]; // c array
     int block_index[MAX_FILE_SIZE/MAX_BLOCK_SIZE][128]; // occ array
-    int _block_num; //how many block used in block_index
+    int _block_num; //how many block used of  block_index
 
     int _cur_block ; // refer to _read_buffer storing which block to reduce reading from file
 

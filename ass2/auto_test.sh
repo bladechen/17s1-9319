@@ -65,8 +65,8 @@ do
     fi
 
     file_size=`ls -l $i|awk  '{print $5}' | grep -v "^$"`
-    test_count=200
-    if [ $file_size -lt 1000 ]
+    test_count=500
+    if [ $file_size -lt 10000 ]
     then
         test_count=10
     fi
@@ -112,7 +112,7 @@ do
             echo "cat $i|$tmp|wc -l >>$RESULT"
             a=$(eval "cat $i|$tmp|wc -l")
             echo $a
-            if [ $a -lt 7000 ]
+            if [ $a -lt 8500 ]
             then
                 break
             fi

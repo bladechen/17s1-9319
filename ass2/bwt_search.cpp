@@ -1,3 +1,10 @@
+/**
+ * @file:   bwt_search.cpp
+ * @brief:
+ * @author: bladechen
+ *
+ * 2017-04-14
+ */
 #include <string.h>
 #include <stdlib.h>
 #include <vector>
@@ -13,7 +20,20 @@ using namespace std;
 // #define DEBUG 1
 std::set<int> replica_hash; // this is tricky, if position in bwt has already scaned, no need to scan again. because they are in the same record.
 
+#ifndef DEBUG
+#undef assert
+#define assert (void)
+#endif
 
+// #define assert assert
+
+/**
+ *
+ * @param:  bwt file
+ * @param:  index file
+ *
+ * @return: 0 success, otherwise error
+ */
 int CBwtSearch::init(const std::string& bwt, const std::string& index)
 {
     _cur_block = -1;
@@ -90,6 +110,9 @@ void CBwtSearch::read_index_file()
 }
 
 
+/**
+ * @brief: format is described above read_index_file
+ */
 void CBwtSearch::create_index_file()
 {
     int tmp[128] = {0};
@@ -204,29 +227,6 @@ void CBwtSearch::run(const std::vector<std::string>& query_strings)
     {
         return;
     }
-    // for (std::map<int, std::string>::iterator it = _result.begin();
-    //      it != _result.end() ;
-    //      it ++)
-    // {
-    //     bool all_match = 1;
-    //     for (int i = 0; i < (int)query_strings.size(); ++ i)
-    //     {
-    //         if (search_index  == i)
-    //         {
-    //             continue;
-    //         }
-    //         if (strstr(it->second.c_str(), query_strings[i].c_str()) == NULL) // this one is boyer more?
-    //         {
-    //             all_match = 0;
-    //             break;
-    //         }
-    //     }
-    //     if (all_match  == 1)
-    //     {
-    //         printf ("[%d]%s\n",it->first, it->second.c_str() );
-    //     }
-
-    // }
     return;
 }
 int CBwtSearch::backward_search(const std::string& search_str,int& first, int& last)
@@ -282,16 +282,23 @@ int CBwtSearch::occ(char c, int pos_not_include_self)
     return count;
 }
 
+/**
+ * @brief:  read specified block from bwt file
+ *
+ * @param:  block_pos
+ *
+ * @return: 0 for success.
+ */
 int CBwtSearch::read_block(int block_pos)
 {
+    // the buffer already contain the specified block
     if (block_pos == _cur_block && _cur_block != -1)
     {
         return 0;
     }
-    _cur_block = block_pos;
+    _cur_block = block_pos; //
     int offset = block_pos * MAX_BLOCK_SIZE ;
     int ret = _bwt_file->read_from_position(offset, _read_buffer, MAX_READ_BUFFER_SIZE);
-    (void)ret;
     if (block_pos == _block_num - 2)
     {
         assert(ret == _bwt_file_size % MAX_READ_BUFFER_SIZE);
@@ -312,7 +319,7 @@ int CBwtSearch::find_whole_string(const std::string& search_str, int first, int 
         int next_pos = -1;
         char ch;
 
-        int flag = 0; // 0 stands for the search term is in [], 1 for ok,  2 is meeting the pos searched before.
+        int flag = 0; // 0 stands for the search term is in [], 1 for ok,  2 is meeting the pos searched before, just skip.
         int point_counter = 0;
         while (1)
         {
@@ -339,10 +346,6 @@ int CBwtSearch::find_whole_string(const std::string& search_str, int first, int 
                     point_counter = 0;
                 }
             }
-            // else
-            // {
-            //     write(2, "full set!\n", 9);
-            // }
         }
         if (flag == 0 || flag == 2)
         {
@@ -357,11 +360,14 @@ int CBwtSearch::find_whole_string(const std::string& search_str, int first, int 
             // printf ("why %s\n", result.c_str());
             continue;
         }
+        // id is represented as [id] in original text from bwt
         int id = 0;
         for (int j = left + 1; j < (int)right; j ++)
         {
             id = id * 10 + result[j] - '0';
         }
+
+        // already find this id, just skip
         if (_result.find(id) != _result.end())
         {
             continue;
@@ -444,7 +450,7 @@ int CBwtSearch::inverse_occ(char c, int l_pos)
             high = mid - 1;
         }
     }
-    // index high is last one smaller than occ_n
+    // block_index[high][c] is last one smaller than occ_n
     read_block(high);
     int pos = high * MAX_BLOCK_SIZE;
     int remain_occ = occ_n - block_index[high][(int)c] + 1;
