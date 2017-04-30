@@ -1,3 +1,4 @@
+# CPPFLAGS := -Wall -O3 -pg  -ggdb3
 CPPFLAGS := -Wall -O3
 # CPPFLAGS := -ggdb3 -Wall -O3
 CC := g++
@@ -18,7 +19,7 @@ all: bwtsearch
     rm -f $@.$$$$
 
 bwtsearch: $(OBJ_FILE)
-	$(CC) $^ -o $@  $(LIBS)
+	$(CC) $^ -o $@ -pg   $(LIBS)
 
 .PHONY:clean
 clean:

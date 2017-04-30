@@ -26,7 +26,21 @@ class COpFile
      *
      * @return: >=0 indicates the bytes read, other wise -errno
      */
-    int read_from_position(size_t off, char* buf, int max_length);
+    inline int read_from_position(const size_t& off, char* buf, const int& max_length)
+    {
+        int ret = lseek(fd, off, SEEK_SET);
+        if (ret == -1)
+        {
+            return -errno;
+        }
+        ret = read(fd, buf, max_length);
+        if (ret < 0)
+        {
+            return -errno;
+        }
+        return ret;
+
+    };
 
     int seek(size_t off);
 

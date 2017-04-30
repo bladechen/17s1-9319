@@ -261,8 +261,8 @@ int CBwtSearch::backward_search(const std::string& search_str,int& first, int& l
 
 int CBwtSearch::occ(char c, int pos_not_include_self)
 {
-    int prev_block = pos_not_include_self / MAX_BLOCK_SIZE;
-    int remain_chars = pos_not_include_self % MAX_BLOCK_SIZE ;
+    int prev_block = DEVIVE(pos_not_include_self);
+    int remain_chars = MOD(pos_not_include_self );
     assert(prev_block <= _block_num - 2);
 
     int count = block_index[prev_block][(int)c];
@@ -297,7 +297,7 @@ int CBwtSearch::read_block(int block_pos)
         return 0;
     }
     _cur_block = block_pos; //
-    int offset = block_pos * MAX_BLOCK_SIZE ;
+    int offset = MUL(block_pos) ;
     int ret = _bwt_file->read_from_position(offset, _read_buffer, MAX_READ_BUFFER_SIZE);
     if (block_pos == _block_num - 2)
     {
@@ -340,7 +340,7 @@ int CBwtSearch::find_whole_string(const std::string& search_str, int first, int 
             }
             if (replica_hash.size() < MAX_REPLICA_HASH_SIZE) //only to limit the mem use...
             {
-                if (point_counter == 20)
+                if (point_counter == 5)
                 {
                     replica_hash.insert(cur_pos);
                     point_counter = 0;
@@ -406,9 +406,11 @@ int CBwtSearch::find_whole_string(const std::string& search_str, int first, int 
     return 0;
 }
 
-void CBwtSearch::backward(int cur_pos, int& next_pos, char& c)
+void CBwtSearch::backward(const int& cur_pos, int& next_pos, char& c)
 {
-    assert(_bwt_file->read_from_position(cur_pos, &c, 1) == 1);
+    // assert(_bwt_file->read_from_position(cur_pos, &c, 1) == 1);
+    read_block(DEVIVE(cur_pos));
+    c =  _read_buffer[MOD(cur_pos)];
     int occ_n = occ(c, cur_pos);
     next_pos = occ_n + char_bucket[(int)c] - 1;
     return;
@@ -452,7 +454,7 @@ int CBwtSearch::inverse_occ(char c, int l_pos)
     }
     // block_index[high][c] is last one smaller than occ_n
     read_block(high);
-    int pos = high * MAX_BLOCK_SIZE;
+    int pos = MUL(high) ;
     int remain_occ = occ_n - block_index[high][(int)c] + 1;
     for (int i = 0 ;i < MAX_BLOCK_SIZE; i ++)
     {

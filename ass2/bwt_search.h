@@ -11,6 +11,11 @@
 // #define MAX_BLOCK_SIZE (50)
 #define MAX_READ_BUFFER_SIZE (MAX_BLOCK_SIZE)
 
+// #define MAX_BLOCK_SIZE_MOD (0xffff4)
+#define DEVIVE(x) ((x) >> 14)
+#define MUL(x) ((x)<< 14)
+#define MOD(x) ((x) & 0x00003fff)
+
 // #define MAX_FILE_SIZE (100000)
 #define MAX_FILE_SIZE (160*1024*1024+1000)
 class CBwtSearch
@@ -51,7 +56,7 @@ protected:
     int read_block(int block_pos);
     int find_whole_string(const std::string& search_str, int first, int last);
 
-    void backward(int cur_pos, int& next_pos, char& c);
+    inline void backward(const int& cur_pos, int& next_pos, char& c);
     void forward(int cur_pos, int & next_pos, char& c);
 
 

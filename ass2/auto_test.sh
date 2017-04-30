@@ -112,7 +112,7 @@ do
             echo "cat $i|$tmp|wc -l >>$RESULT"
             a=$(eval "cat $i|$tmp|wc -l")
             echo $a
-            if [ $a -lt 8500 ]
+            if [ $a -lt 6500 ]
             then
                 break
             fi
