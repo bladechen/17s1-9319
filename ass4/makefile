@@ -6,7 +6,7 @@ SRC_FILE := $(wildcard *.cpp)
 OBJ_FILE := $(SRC_FILE:.cpp=.o)
 INCLUDES := -I./
 LIBS =
-all: bwtsearch
+all: a3search
 
 
 # %.o: %.cpp
@@ -18,12 +18,12 @@ all: bwtsearch
     sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
     rm -f $@.$$$$
 
-bwtsearch: $(OBJ_FILE)
+a3search: $(OBJ_FILE)
 	$(CC) $^ -o $@  -m32 -pg  $(LIBS)
 
 .PHONY:clean
 clean:
-	-rm -f $(OBJ_FILE) bwtsearch *.d *.o
+	-rm -f $(OBJ_FILE) a3search *.d *.o
 
 
 

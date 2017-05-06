@@ -41,8 +41,34 @@ protected:
     int load_stop_words(const std::string& filename);
 
     int read_original_file(std::map<std::string, int>& word_2_count, const std::string& original_file);
-    int write_wordcount_2_file(const std::map<std::string, int>& word_2_count, const std::string& wordcount_file);
+    // int write_wordcount_2_file(const std::map<std::string, int>& word_2_count, const std::string& wordcount_file);
     inline void insert_new_word(std::map<std::string, int>& word_2_count, const std::string& s);
+
+    void save_map_2_file(const std::map<std::string, int>& m, const std::string& filename);
+    void read_file_2_map(std::map<std::string, int>&m, const std::string& filename);
+    bool parse_one_line(std::pair<int, int>& ret, COpFile* op);
+    void generate_word_count_index();
+    void output_result(const std::vector<int>& fileid_count);
+    void load_concept_dict();
+
+    struct S
+    {
+        int file_id;
+        int count;
+        S()
+        {
+            file_id = 0;
+            count = 0;
+        }
+        S(int a, int b)
+        {
+            file_id = a;
+            count = b;
+        }
+    };
+
+
+    static bool sort_func(S l,  S r);
 private:
     std::vector<std::string> index_file_list;
     std::map<std::string, int> file_2_id;
@@ -50,10 +76,19 @@ private:
     COpDir *_index_dir;
     char _read_buffer[MAX_READ_BUFFER_SIZE];
     int _read_len ;
+    char _write_buffer[MAX_READ_BUFFER_SIZE];
 
     std::set<std::string> stop_words;
 
+
     std::map<std::string, int > wordset;
+    std::map<int, std::string> id_2_word;
+    std::vector<int> wordid_pos;
+    std::map<int, std::string> id_2_file;
+
+    std::map<std::string, std::vector<std::string> > concept_relation;
+    // std::map<int,
+    // std::
 };
 #endif
 

@@ -85,7 +85,7 @@ COpDir::COpDir(const std::string& dir_name)
     memset(&st, 0, sizeof(struct stat));
     if (stat(dir_name.c_str(), &st) == -1)
     {
-        assert(mkdir(dir.c_str(), 0770) == 0);
+        assert(mkdir(dir_path.c_str(), 0770) == 0);
     }
     dir = opendir (dir_name.c_str());
     assert(dir != NULL);

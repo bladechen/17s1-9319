@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 #include <sys/types.h>
 #include <dirent.h>
 #include <unistd.h>
@@ -36,22 +37,19 @@ class COpFile
      *
      * @return: >=0 indicates the bytes read, other wise -errno
      */
-    // inline int read_from_position(const size_t& off, char* buf, const int& max_length)
-    // {
-    //     int ret = seek(off);
-    //     if (ret == -1)
-    //     {
-    //         return -errno;
-    //     }
-    //     ret = read(fd, buf, max_length);
-    //     if (ret < 0)
-    //     {
-    //         return -errno;
-    //     }
-    //     return ret;
-    //
-    // };
-    //
+    inline int read_from_position(const size_t& off, char* buf, const int& max_length)
+    {
+        int ret = seek(off);
+        if (ret == -1)
+        {
+            return -errno;
+        }
+        ret = fread(buf, max_length, 1, file);
+        assert(ret > 0);
+        return ret;
+
+    };
+
     int seek(size_t off);
 
 
