@@ -152,10 +152,8 @@ int CA3Search::read_index()
     id_2_file.clear();
     for (std::map<std::string, int>::iterator it = file_2_id.begin(); it != file_2_id.end(); ++it)
     {
-        printf  ("@@@@@%d\n", it->second);
         assert(id_2_file.find(it->second) == id_2_file.end());
         id_2_file[it->second] = it->first;
-
     }
 
     return 0;
@@ -240,12 +238,20 @@ void CA3Search::generate_word_count_index()
     vector<COpFile*> op_files;
     for (map<std::string, int>::const_iterator it  =file_2_id.begin(); it != file_2_id.end(); it ++)
     {
+
+#ifdef DEBUG
+        // printf ("%d %d %s %s\n", op_files.size(), it->second, it->first.c_str(), id_2_file[it->second].c_str());
+#endif
         assert((int)op_files.size() == it->second);
         assert(it->first == id_2_file[it->second]);
         string path = _index_dir->get_dir_str() + "/" + TMP_FILE +"wordcount." +it->first;
+#ifdef DEBUG
+        // printf ("%d %d %s %s\n", op_files.size(), it->second, it->first.c_str(), id_2_file[it->second].c_str());
+#endif
+
         op_files.push_back(new COpFile(path, "r"));
 #ifdef DEBUG
-        printf ("generate_word_count_index: %s %d\n", path.c_str(), it->second);
+        // printf ("generate_word_count_index: %s %d\n", path.c_str(), it->second);
 #endif
 
     }

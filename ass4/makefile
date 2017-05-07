@@ -1,5 +1,5 @@
 # CPPFLAGS := -Wall -O3 -pg  -ggdb3
-CPPFLAGS := -m32 -pg -Wall -O0 -ggdb3
+CPPFLAGS := -m32  -Wall -O3 -ggdb3
 # CPPFLAGS := -ggdb3 -Wall -O3
 CC := g++
 SRC_FILE := $(wildcard *.cpp)

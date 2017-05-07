@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 #include <stdlib.h>
 #include <string.h>
 #include <string>
@@ -12,7 +14,16 @@ int main(int argc, char** argv)
         printf ("argc < 4\n");
         return -1;
     }
-    CA3Search *a3 = new CA3Search();
+	// cse has 4096 fd hard limit, which is enough for 2000 maximum orignal files.
+	struct rlimit rlim;
+	if (0 == getrlimit(RLIMIT_NOFILE, &rlim))
+	{
+
+		rlim.rlim_cur = rlim.rlim_max;
+		setrlimit(RLIMIT_NOFILE, &rlim);
+	}
+
+	CA3Search *a3 = new CA3Search();
     if (a3->init(argv[1], argv[2]) != 0)
     {
         printf ("init error\n");

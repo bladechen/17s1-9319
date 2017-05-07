@@ -9,11 +9,13 @@ using namespace std;
 COpFile::COpFile(const string& file_name, const std::string& open_flag)
 {
     file = NULL;
+    // printf ("%s\n", file_name.c_str());
     file = fopen(file_name.c_str(), open_flag.c_str());
+    // printf ("%s %p\n", file_name.c_str(), file);
     if (file == NULL)
     {
-         throw string("open file [") + file_name +"] failed";
-
+        // perror("");
+         throw (char*)((string("open file [") + file_name +"] failed").c_str());
     }
     return;
 
