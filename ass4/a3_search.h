@@ -49,13 +49,17 @@ protected:
     bool parse_one_line(std::pair<int, int>& ret, COpFile* op);
     void generate_word_count_index();
 
-    void output_result(const std::vector<int>& fileid_count, int contain[], int key_size);
+    void output_result(const std::vector<double>& fileid_count, int contain[], int key_size);
     void load_concept_dict();
 
+
+    bool read_word_count(const std::string& word, int* file_count, COpFile* fp);
+
+    void find_concept_term(const std::string& key, std::vector<std::string>& concepts);
     struct S
     {
         int file_id;
-        int count;
+        double count;
         S()
         {
             file_id = 0;
@@ -83,7 +87,7 @@ private:
 
 
     std::map<std::string, int > wordset;
-    std::map<int, std::string> id_2_word;
+    // std::map<int, std::string> id_2_word;
     std::vector<int> wordid_pos;
     std::map<int, std::string> id_2_file;
 

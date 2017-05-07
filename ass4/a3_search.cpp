@@ -24,7 +24,7 @@ const std::string STOP_WORDS_FILE = "stop.words";
 #define INDEX_WORD_2_FILE_2_COUNT "word_2_file_2_count"
 // #define MAGIC_NUMBER 0xdeadbeef
 using namespace std;
-// #define DEBUG 1
+#define DEBUG 1
 
 #ifndef DEBUG
 #undef assert
@@ -73,13 +73,13 @@ int CA3Search::init(const std::string& target_folder, const std::string& index_f
 }
 bool CA3Search::is_valid_index(const std::string& index)
 {
-    COpFile index_fp(_index_dir->get_dir_str() + "/" + index, "r");
+    COpFile index_fp(_index_dir->get_dir_str() + "/" + INDEX_FILE + index, "r");
     int ret = index_fp.read_line(_read_buffer, sizeof(_read_buffer));
     if (ret == 0 || strcmp(_read_buffer, _target_dir->get_dir_str().c_str()) != 0)
     {
         return 0;
     }
-    while (index_fp.read_file(_read_buffer, sizeof(_read_buffer)))
+    while (index_fp.read_line(_read_buffer, sizeof(_read_buffer)))
     {
         index_file_list.push_back(_read_buffer);
     }
@@ -152,6 +152,7 @@ int CA3Search::read_index()
     id_2_file.clear();
     for (std::map<std::string, int>::iterator it = file_2_id.begin(); it != file_2_id.end(); ++it)
     {
+        printf  ("@@@@@%d\n", it->second);
         assert(id_2_file.find(it->second) == id_2_file.end());
         id_2_file[it->second] = it->first;
 
@@ -162,7 +163,7 @@ int CA3Search::read_index()
 }
 int CA3Search::check_index()
 {
-    if (_index_dir->file_exist(INDEX_INDEX_FILE) == 0 || is_valid_index(INDEX_INDEX_FILE) == 0)
+    if (_index_dir->file_exist(string(INDEX_FILE) + INDEX_INDEX_FILE) == 0 || is_valid_index(INDEX_INDEX_FILE) == 0)
     {
         return build_index();
     }
@@ -360,7 +361,7 @@ void CA3Search::generate_word_count_index()
 
     index_op.write_file(INDEX_WORD_2_FILE_2_COUNT, strlen(INDEX_WORD_2_FILE_2_COUNT));
     index_op.write_file("\n", 1);
-
+    system ((string("rm -r ") + _index_dir->get_dir_str()  + "/" + TMP_FILE + "*").c_str());
 
     return ;
 
@@ -383,7 +384,7 @@ bool CA3Search::parse_one_line(pair<int, int>& ret, COpFile* op)
         ret.first = wordset[buf1];
         ret.second = count;
 #ifdef DEBUG
-        printf ("parse_one_line %s:%d %d\n", buf1,ret.first, count);
+        // printf ("parse_one_line %s:%d %d\n", buf1,ret.first, count);
 #endif
         return 1;
     }
@@ -411,10 +412,31 @@ void CA3Search::read_file_2_map(std::map<std::string, int>&m, const std::string&
     m.clear();
     static char buf[4096];
     static int count = 0;
-    COpFile file (filename, "w");
+    COpFile file (filename, "r");
     while (file.read_line(buf, 4095))
     {
-        sscanf(buf, "%s %d", buf, &count);
+
+        int i = 0;
+        count  = 0;
+        for (i = strlen(buf) - 1; i>= 0; i --)
+        {
+            if (buf[i] >= '0' && buf[i] <= '9')
+            {
+                continue;
+                // num = num * 10 + buf[i] - '0';
+            }
+            else
+            {
+                for (int j = i + 1; j < (int)strlen(buf) ;j ++)
+                {
+                    count = count * 10 + buf[j] - '0';
+                }
+                buf[i] = 0;
+                break;
+            }
+
+        }
+        // printf("###%s %d\n", buf, num);
         m[buf] = count;
     }
     return;
@@ -423,8 +445,6 @@ void CA3Search::read_file_2_map(std::map<std::string, int>&m, const std::string&
 }
 void CA3Search::insert_new_word(map<std::string, int>& word_2_count, const std::string& s)
 {
-    // printf ("%s\n", s.c_str());
-    // string tmp = s;
     static char buf[4096];
     // // assert(tmp.length() < 4096)
     strncpy(buf, s.c_str(), s.length());
@@ -459,7 +479,7 @@ int CA3Search::read_original_file(map<std::string, int>& word_2_count, const std
         assert(_read_len >= 0);
 #ifdef DEBUG
         _read_buffer[_read_len] = 0;
-        printf ("%s: %s\n", original_file.c_str(), _read_buffer);
+        // printf ("%s: %s\n", original_file.c_str(), _read_buffer);
 #endif
 
 
@@ -570,17 +590,65 @@ void CA3Search::load_concept_dict()
     }
     return ;
 }
+bool CA3Search::read_word_count(const std::string& word, int *file_count , COpFile* fp)
+{
+    int total_file = file_2_id.size();
+    memset (file_count, 0, total_file * 4);
+    if (wordset.find(word) == wordset.end())
+    {
+        // all the files (the filenames only) that contain ALL input query strings (i.e., a boolean AND search)
+        // output just one newline character if there are no matches for the query.
+        return 0;
+
+    }
+    size_t pos = wordid_pos[wordset[word]];
+    int total_len;
+    _read_len = fp->read_from_position(pos , (char*)&total_len, 4);
+    assert(_read_len == 4);
+    assert(total_len > 4 && total_len < 20000);
+    assert(total_len == fp->read_from_position(pos + 4, _read_buffer, total_len));
+    int word_id;
+    memcpy(&word_id, _read_buffer, 4);
+    (void) word_id;
+    assert(word_id == wordset[word]);
+    assert((total_len - 4) % 6 == 0);
+#ifdef DEBUG
+    printf ("current finding key: %s, pos: %d, total count: %d\n",word.c_str(), pos, (total_len - 4) / 6);
+#endif
+
+
+    bool find = 0;
+    int cnt = (total_len - 4) / 6;
+    for (int j = 0; j < cnt; j ++)
+    {
+        int file_id = *(unsigned short*)(_read_buffer + 4 + 6 * j);
+        int  count = *(int *)(_read_buffer + 4+6 * j + 2);
+        assert(file_id >= 0 && file_id < (int)id_2_file.size());
+        assert(file_count[file_id] == 0);
+        assert(count > 0);
+        file_count[file_id] += count;
+        find = 1;
+#ifdef DEBUG
+        printf ("file %s, count %d\n", id_2_file[file_id].c_str(), count);
+
+#endif
+    }
+#ifdef DEBUG
+    printf ("###########################\n\n");
+
+#endif
+
+    return find;
+
+}
 void CA3Search::run(const std::vector<std::string>& query_strings, double c_value)
 {
     static char buf[4096];
     static int contain[2048];
+    static int tmp_count[2048];
     memset(contain, 0, sizeof(contain));
 
-    if (c_value > 0)
-    {
-        load_concept_dict();
-        // init id_2_word
-    }
+    int file_num = file_2_id.size();
     vector<std::string> keys;
     // vector<std::string> stemmming_strings ;
     for (int i = 0; i < (int)query_strings.size(); ++ i)
@@ -593,9 +661,8 @@ void CA3Search::run(const std::vector<std::string>& query_strings, double c_valu
         // stemmming_strings.push_back(tmp);
         keys.push_back(tmp);
     }
-    // TODO find concept
 
-    vector<int> result; // index is the file id
+    vector<double> result; // index is the file id
     result.resize(id_2_file.size());
     for (int i = 0; i < (int)result.size(); ++ i)
     {
@@ -608,67 +675,104 @@ void CA3Search::run(const std::vector<std::string>& query_strings, double c_valu
     {
         for (int i = 0; i < (int)keys.size(); i ++)
         {
-            if (wordset.find(keys[i]) == wordset.end())
+
+            bool find = this->read_word_count(keys[i], tmp_count, &word_2_file_2_count);
+            if (find == 0)
             {
-                // all the files (the filenames only) that contain ALL input query strings (i.e., a boolean AND search)
-                // output just one newline character if there are no matches for the query.
                 printf ("\n");
                 return;
-
             }
-            size_t pos = wordid_pos[wordset[keys[i]]];
-            // (void)pos;
-            // TODO, fix if not find
-            // assert(pos >= 0);
-            int total_len;
-            _read_len = word_2_file_2_count.read_from_position(pos , (char*)&total_len, 4);
-            assert(_read_len == 4);
-            assert(total_len > 4 && total_len < 20000);
-            assert(total_len == word_2_file_2_count.read_from_position(pos + 4, _read_buffer, total_len));
-            int word_id;
-            memcpy(&word_id, _read_buffer, 4);
-            (void) word_id;
-            assert(word_id == wordset[keys[i]]);
-            assert((total_len - 4) % 6 == 0);
-#ifdef DEBUG
-            printf ("current finding key: %s, pos: %d, total count: %d\n",keys[i].c_str(), pos, (total_len - 4) / 6);
-#endif
-
-
-            int cnt = (total_len - 4) / 6;
-            for (int j = 0; j < cnt; j ++)
+            else
             {
-                int file_id = *(unsigned short*)(_read_buffer + 4 + 6 * j);
-                int  count = *(int *)(_read_buffer + 4+6 * j + 2);
-                assert(file_id >= 0 && file_id < (int)id_2_file.size());
-                result[file_id] += count;
-                contain[file_id] |= (1 << i);
+                for (int j = 0; j < file_num ; ++ j)
+                {
+                    if (tmp_count[j] != 0)
+                    {
+                        contain[j] |= (1 << i);
+                        result[j] += tmp_count[j];
+                    }
+                }
             }
-
         }
     }
     else
     {
-        if (c_value > 0)
-        {
-            // vector<string> concept_list = concept_relation[id_2_word[key_ids[i]]];
-            // for (int i = 0; i < (int)concept_list.size(); i++)
-            // {
-            //     // TODO find all the value, add to h[fileid] which is equal to 0
-            // }
-            // for (int j = 0; j < (int)result.size(); j ++  )
-            // {
-            //     if (h[j])
-            //
-            // }
-        }
 
+        load_concept_dict();
+        static bool h[2048];
+        for (int i = 0; i < (int)keys.size(); ++i)
+        {
+
+            vector<std::string> concept_term;
+            find_concept_term(keys[i], concept_term);
+            // memset(h, 0, sizeof(h));
+            this->read_word_count(keys[i], tmp_count, &word_2_file_2_count);
+            for (int j = 0; j < file_num ; ++ j)
+            {
+                if (tmp_count[j] != 0)
+                {
+// #ifdef DEBUG
+//                     printf ("file %s, find %s, with count: %d\n", id_2_file[j].c_str(), keys[i].c_str(), tmp_count[j]);
+// #endif
+                    contain[j] |= (1 << i);
+                    result[j] += tmp_count[j];
+                }
+            }
+            for (int k = 0; k < (int)concept_term.size(); ++ k)
+            {
+
+                memset(h, 0, sizeof(h));
+#ifdef DEBUG
+                printf("following is concept search [%s]\n", concept_term[k].c_str());
+#endif
+                bool b = this->read_word_count(concept_term[k], tmp_count, &word_2_file_2_count);
+                if (b == 0) continue;
+                for (int j = 0; j < file_num; j ++)
+                {
+                    // not find key term, use concept search
+                    if ((contain[j] & (1 << i)) == 0 && tmp_count[j])
+                    {
+#ifdef DEBUG
+                        printf ("file %s, find [%s]'s concept [%s] , with count: %d\n", id_2_file[j].c_str(), keys[i].c_str(), concept_term[k].c_str(),tmp_count[j]);
+#endif
+
+                        result[j] += c_value * tmp_count[j];
+                        h[j] = 1;
+                    }
+                }
+                for (int j = 0; j < file_num; ++ j)
+                {
+                    if (h[j] == 1)
+                    {
+                        assert((contain[j] & (1 << i)) == 0);
+                        contain[j]  |= ( 1<< i);
+                    }
+                }
+            }
+        }
     }
     output_result(result, contain, keys.size());
 
     return;
 }
 
+void CA3Search::find_concept_term(const std::string& key, std::vector<std::string>& concepts)
+{
+    concepts.clear();
+    if (concept_relation.find(key) != concept_relation.end())
+    {
+        const vector<string>& tmp = concept_relation[key];
+        for (int i = 1 ;i < (int)tmp.size(); ++ i)
+        {
+            concepts.push_back(tmp[i]);
+#ifdef DEBUG
+            printf ("find_concept_term %s -> %s\n", key.c_str(), tmp[i].c_str());
+#endif
+
+        }
+    }
+    return;
+}
 bool CA3Search::sort_func(S l,  S r)
 {
     if (l.count != r.count)
@@ -681,13 +785,16 @@ bool CA3Search::sort_func(S l,  S r)
     }
 
 }
-void CA3Search::output_result(const std::vector<int>& fileid_count, int contain[], int key_size)
+void CA3Search::output_result(const std::vector<double>& fileid_count, int contain[], int key_size)
 {
     vector<S> r;
     for (int i = 0; i < (int)fileid_count.size(); i ++)
     {
         if (fileid_count[i] > 0 && (contain[i] + 1== (1 << key_size)))
         {
+#ifdef DEBUG
+            printf ("file: %s, values: %lf\n", id_2_file[i].c_str(), fileid_count[i]);
+#endif
             r.push_back(S(i, fileid_count[i]));
         }
 
@@ -701,7 +808,6 @@ void CA3Search::output_result(const std::vector<int>& fileid_count, int contain[
 
     for (int i = 0; i < (int)r.size(); i ++)
     {
-
         printf("%s\n", id_2_file[r[i].file_id].c_str());
     }
     return ;
