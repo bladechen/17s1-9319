@@ -44,8 +44,8 @@ class COpFile
         {
             return -errno;
         }
-        ret = fread(buf, max_length, 1, file);
-        assert(ret > 0);
+        ret = fread(buf, 1, max_length, file);
+        assert(ret >= 0);
         return ret;
 
     };
@@ -74,7 +74,7 @@ class COpFile
      *
      * @return: negative indicates error, which is -errno, positive means the bytes write to files
      */
-    int write_file(char* output, int length);
+    int write_file(const char* output, int length);
 
 
 
@@ -95,6 +95,8 @@ class COpDir
         // int create_file(const std::string& filename);
 
         int file_exist(const std::string& file);
+
+        void clean_dir();
 
         std::string get_dir_str()
         {

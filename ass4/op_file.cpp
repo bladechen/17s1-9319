@@ -30,7 +30,7 @@ COpFile::~COpFile()
 
 int COpFile::read_file(char* output, int max_length)
 {
-    size_t read_length = fread(output, max_length, 1, file);
+    size_t read_length = fread(output, 1, max_length, file);
     assert( ferror(file) == 0);
     // if (feof(file) == )
     return (int) read_length;
@@ -49,9 +49,9 @@ bool COpFile::read_line(char* output, int max_length)
     return 1;
 
 }
-int COpFile::write_file(char* output, int length)
+int COpFile::write_file(const char* output, int length)
 {
-    int r = fwrite( output, length, 1, file);
+    int r = fwrite( output,1, length, file);
     return r >= 0 ? r: -errno;
 
 }
@@ -103,7 +103,7 @@ int COpDir::read_filelist(std::vector<std::string>& out)
 {
     struct dirent* in_file;
     out.clear();
-    while ((in_file = readdir(dir)))
+    while ((in_file = readdir(dir)) != NULL)
     {
         if (!strcmp (in_file->d_name, "."))
             continue;
@@ -115,10 +115,10 @@ int COpDir::read_filelist(std::vector<std::string>& out)
             printf ("what happend, %s\n", in_file->d_name);
             continue;
         }
-        out.push_back(dir_path + "/" + in_file->d_name);
+        out.push_back( in_file->d_name);
 
     }
-    assert(errno == 0);
+    // assert(errno == 0);
     return 0;
 }
 
@@ -127,4 +127,19 @@ int COpDir::file_exist(const std::string& file)
 {
     struct stat   buffer;
     return (stat ((dir_path + "/" + file).c_str(), &buffer) == 0);
+}
+void COpDir::clean_dir()
+{
+    struct dirent *next_file;
+    static char filepath[512];
+
+    while ( (next_file = readdir(dir)) != NULL )
+    {
+        // build the path for each file in the folder
+		if (string(next_file->d_name) == "." || string(next_file->d_name) == "..") continue;
+
+        sprintf(filepath, "%s/%s", dir_path.c_str(), next_file->d_name); // buffer overflow vuln
+        remove(filepath);
+    }
+    return;
 }

@@ -7,7 +7,7 @@
 #include "op_file.h"
 
 #define MAX_FILE_SIZE (160*1024*1024+1000)
-#define MAX_READ_BUFFER_SIZE (1024*1024*64)
+#define MAX_READ_BUFFER_SIZE (1024*64)
 class CA3Search
 {
 public:
@@ -48,7 +48,8 @@ protected:
     void read_file_2_map(std::map<std::string, int>&m, const std::string& filename);
     bool parse_one_line(std::pair<int, int>& ret, COpFile* op);
     void generate_word_count_index();
-    void output_result(const std::vector<int>& fileid_count);
+
+    void output_result(const std::vector<int>& fileid_count, int contain[], int key_size);
     void load_concept_dict();
 
     struct S
