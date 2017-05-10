@@ -65,7 +65,7 @@ protected:
             file_id = 0;
             count = 0;
         }
-        S(int a, int b)
+        S(int a, double b)
         {
             file_id = a;
             count = b;

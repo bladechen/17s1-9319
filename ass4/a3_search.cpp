@@ -470,6 +470,7 @@ void CA3Search::insert_new_word(map<std::string, int>& word_2_count, const std::
     {
         word_2_count[tmp] = 1;
     }
+    // printf ("%s %s\n", s.c_str(), buf);
     wordset[tmp] = 1;
 
 }
@@ -696,6 +697,9 @@ void CA3Search::run(const std::vector<std::string>& query_strings, double c_valu
                     {
                         contain[j] |= (1 << i);
                         result[j] += tmp_count[j];
+// #ifdef DEBUG
+                        // printf ("%s %d\n", id_2_file[j].c_str(), tmp_count[j]);
+// #endif
                     }
                 }
             }
@@ -736,7 +740,8 @@ void CA3Search::run(const std::vector<std::string>& query_strings, double c_valu
                 for (int j = 0; j < file_num; j ++)
                 {
                     // not find key term, use concept search
-                    if ((contain[j] & (1 << i)) == 0 && tmp_count[j])
+                    // if ((contain[j] & (1 << i)) == 0 && tmp_count[j])
+                    if (tmp_count[j])
                     {
 #ifdef DEBUG
                         printf ("file %s, find [%s]'s concept [%s] , with count: %d\n", id_2_file[j].c_str(), keys[i].c_str(), concept_term[k].c_str(),tmp_count[j]);
@@ -750,7 +755,7 @@ void CA3Search::run(const std::vector<std::string>& query_strings, double c_valu
                 {
                     if (h[j] == 1)
                     {
-                        assert((contain[j] & (1 << i)) == 0);
+                        // assert((contain[j] & (1 << i)) == 0);
                         contain[j]  |= ( 1<< i);
                     }
                 }
@@ -814,7 +819,7 @@ void CA3Search::output_result(const std::vector<double>& fileid_count, int conta
 
     for (int i = 0; i < (int)r.size(); i ++)
     {
-        printf("%s\n", id_2_file[r[i].file_id].c_str());
+        printf("%s %lf\n", id_2_file[r[i].file_id].c_str(), r[i].count);
     }
     return ;
 }
