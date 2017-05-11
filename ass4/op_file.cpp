@@ -14,9 +14,13 @@ COpFile::COpFile(const string& file_name, const std::string& open_flag)
     // printf ("%s %p\n", file_name.c_str(), file);
     if (file == NULL)
     {
+        assert(0);
         // perror("");
-         throw (char*)((string("open file [") + file_name +"] failed").c_str());
+         // throw (char*)((string("open file [") + file_name +"] failed").c_str());
     }
+    my_buf = (char*)malloc(4096);
+    assert(my_buf != NULL);
+    assert(setvbuf(file,  my_buf, _IOFBF, 4096) == 0);
     return;
 
 }
@@ -28,6 +32,7 @@ COpFile::~COpFile()
         fclose(file);
         file = NULL;
     }
+    free(my_buf);
 }
 
 int COpFile::read_file(char* output, int max_length)
@@ -114,7 +119,7 @@ int COpDir::read_filelist(std::vector<std::string>& out)
         if (in_file->d_type == DT_DIR)
         {
             //FIXME
-            printf ("what happend, %s\n", in_file->d_name);
+            // printf ("what happend, %s\n", in_file->d_name);
             continue;
         }
         out.push_back( in_file->d_name);
@@ -129,6 +134,26 @@ int COpDir::file_exist(const std::string& file)
 {
     struct stat   buffer;
     return (stat ((dir_path + "/" + file).c_str(), &buffer) == 0);
+}
+
+void COpDir::clean_dir(const std::string& file_prefix)
+{
+    struct dirent *next_file;
+    static char filepath[1012];
+
+    while ( (next_file = readdir(dir)) != NULL )
+    {
+        // build the path for each file in the folder
+		if (string(next_file->d_name) == "." || string(next_file->d_name) == "..") continue;
+        if (strncmp(file_prefix.c_str(), next_file->d_name, file_prefix.length()) == 0)
+
+        {
+            sprintf(filepath, "%s/%s", dir_path.c_str(), next_file->d_name); // buffer overflow vuln
+            remove(filepath);
+        }
+    }
+    return;
+
 }
 void COpDir::clean_dir()
 {

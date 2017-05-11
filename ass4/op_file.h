@@ -83,6 +83,7 @@ class COpFile
     int file_size();
     protected:
     FILE* file;
+    char* my_buf;
 
 };
 
@@ -97,6 +98,7 @@ class COpDir
         int file_exist(const std::string& file);
 
         void clean_dir();
+        void clean_dir(const std::string& file_prefix);
 
         std::string get_dir_str()
         {

@@ -24,8 +24,9 @@ const std::string STOP_WORDS_FILE = "stop.words";
 #define INDEX_WORD_2_FILE_2_COUNT "word_2_file_2_count"
 // #define MAGIC_NUMBER 0xdeadbeef
 using namespace std;
-#define DEBUG 1
+// #define DEBUG 1
 
+static char buf[4096 * 3];
 #ifndef DEBUG
 #undef assert
 #define assert (void)
@@ -213,14 +214,15 @@ int CA3Search::build_index()
         printf ("%s %d\n", v[i].c_str(), i);
 #endif
     }
+    map<std::string, int> word_2_count;
     save_map_2_file(file_2_id, _index_dir->get_dir_str() + "/" + INDEX_FILE + "file_2_id");
     for (int i = 0; i < (int)v.size(); i ++)
     {
-        map<std::string, int> word_2_count;
         word_2_count.clear();
         assert(read_original_file(word_2_count, _target_dir->get_dir_str() + "/" + v[i]) == 0);
         save_map_2_file(word_2_count, _index_dir->get_dir_str() + "/"+ TMP_FILE +  "wordcount." + v[i]   );
     }
+    v.clear();
 
 
     int i = 0;
@@ -257,9 +259,9 @@ void CA3Search::generate_word_count_index()
     }
     unsigned int offset = 0;
     vector<pair<int, int> > cur_wordid_2_count;
-    cur_wordid_2_count.resize(2048);
-    static bool end_of_file[2048];
-    static bool has_word[2048];
+    cur_wordid_2_count.resize(2001);
+    static bool end_of_file[2001];
+    static bool has_word[2001];
     memset(end_of_file, 0, sizeof(end_of_file));
     memset(has_word, 0, sizeof(has_word));
     COpFile word_2_file_2_count(_index_dir->get_dir_str() + "/" + INDEX_FILE + "word_2_file_2_count", "w");
@@ -367,17 +369,19 @@ void CA3Search::generate_word_count_index()
 
     index_op.write_file(INDEX_WORD_2_FILE_2_COUNT, strlen(INDEX_WORD_2_FILE_2_COUNT));
     index_op.write_file("\n", 1);
-    system ((string("rm -r ") + _index_dir->get_dir_str()  + "/" + TMP_FILE + "*").c_str());
+    assert(system ((string("rm -r ") + _index_dir->get_dir_str()  + "/" + TMP_FILE + "*").c_str()) || 1 == 1);
 
+    // _index_dir->clean_dir(TMP_FILE);
+    // delete _target_dir;
+    // _target_dir = NULL;
     return ;
 
 }
 
 bool CA3Search::parse_one_line(pair<int, int>& ret, COpFile* op)
 {
-    static char buf[4096];
-    static char buf1[4096];
-    bool res = op->read_line(buf, 4095);
+    static char buf1[1001];
+    bool res = op->read_line(buf, 1000);
     if (res == 0)
     {
         return 0;
@@ -399,7 +403,6 @@ bool CA3Search::parse_one_line(pair<int, int>& ret, COpFile* op)
 void CA3Search::save_map_2_file(const std::map<std::string, int>& word_2_count, const std::string& wordcount_file)
 {
 
-    static char buf[4096];
     COpFile file (wordcount_file, "w");
     for (map<string, int>::const_iterator it = word_2_count.begin();
          it != word_2_count.end(); it ++)
@@ -416,7 +419,6 @@ void CA3Search::save_map_2_file(const std::map<std::string, int>& word_2_count, 
 void CA3Search::read_file_2_map(std::map<std::string, int>&m, const std::string& filename)
 {
     m.clear();
-    static char buf[4096];
     static int count = 0;
     COpFile file (filename, "r");
     while (file.read_line(buf, 4095))
@@ -451,7 +453,6 @@ void CA3Search::read_file_2_map(std::map<std::string, int>&m, const std::string&
 }
 void CA3Search::insert_new_word(map<std::string, int>& word_2_count, const std::string& s)
 {
-    static char buf[4096];
     // // assert(tmp.length() < 4096)
     strncpy(buf, s.c_str(), s.length());
     buf[s.length()] = 0;
@@ -650,9 +651,8 @@ bool CA3Search::read_word_count(const std::string& word, int *file_count , COpFi
 }
 void CA3Search::run(const std::vector<std::string>& query_strings, double c_value)
 {
-    static char buf[4096];
-    static int contain[2048];
-    static int tmp_count[2048];
+    static int contain[2001];
+    static int tmp_count[2001];
     memset(contain, 0, sizeof(contain));
 
     int file_num = file_2_id.size();
@@ -709,7 +709,7 @@ void CA3Search::run(const std::vector<std::string>& query_strings, double c_valu
     {
 
         load_concept_dict();
-        static bool h[2048];
+        static bool h[2001];
         for (int i = 0; i < (int)keys.size(); ++i)
         {
 
@@ -786,7 +786,7 @@ void CA3Search::find_concept_term(const std::string& key, std::vector<std::strin
 }
 bool CA3Search::sort_func(S l,  S r)
 {
-    if (l.count != r.count)
+    if (l.count != r.count && (l.count >= 0.01 && r.count>=0.01))
     {
         return (r.count < l.count);
     }
@@ -819,7 +819,8 @@ void CA3Search::output_result(const std::vector<double>& fileid_count, int conta
 
     for (int i = 0; i < (int)r.size(); i ++)
     {
-        printf("%s %lf\n", id_2_file[r[i].file_id].c_str(), r[i].count);
+        // printf("%s %d\n", id_2_file[r[i].file_id].c_str(), (int)r[i].count);
+        printf("%s\n", id_2_file[r[i].file_id].c_str());
     }
     return ;
 }

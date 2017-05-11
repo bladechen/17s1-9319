@@ -34,6 +34,10 @@ int main(int argc, char** argv)
     if (strcmp(argv[3], "-c") == 0)
     {
         c_value = strtod(argv[4], NULL);
+        if (c_value < 0.00000001)
+        {
+            c_value = 0.00000001;
+        }
         idx = 5;
     }
     vector<string> query;
